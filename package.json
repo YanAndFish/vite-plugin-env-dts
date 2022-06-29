@@ -1,0 +1,37 @@
+{
+  "name": "vite-plugin-env-dts",
+  "version": "0.0.0",
+  "description": "Auto generate env file declare for typescript of Vite plugins",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "test": "vite -c test/vite.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^4.7.3",
+    "vite": "^2.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YanAndFish/vite-plugin-env-dts.git"
+  },
+  "keywords": [
+    "vite",
+    "env",
+    "typescript"
+  ],
+  "author": "YanAndFish <383904425@qq.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/YanAndFish/vite-plugin-env-dts/issues"
+  },
+  "homepage": "https://github.com/YanAndFish/vite-plugin-env-dts#readme",
+  "packageManager": "pnpm@7.4.0",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "fast-glob": "^3.2.11"
+  }
+}
