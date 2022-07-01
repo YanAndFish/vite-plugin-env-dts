@@ -1,20 +1,38 @@
-import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import type { Plugin, ResolvedConfig } from 'vite'
+import type { Plugin } from 'vite'
 import parse from './env-parser'
-import { convertValue, isTypeScriptProject } from './util'
+import { convertValue, isTypeScriptProject, scanEnv } from './util'
 
-/** 插件配置 */
+/** plugin options */
 export interface EnvDtsOptions {
   include?: (RegExp | string)[]
   exclude?: (RegExp | string)[]
   declareFilePath?: string
   convertValue?: boolean
+  encoding?: BufferEncoding
 }
 
-/** 插件名称 */
+/** plugin name */
 const PLUGIN_NAME = 'vite:env-dts'
 
+/**
+ * Auto generate env file declare for typescript of Vite plugins
+ *
+ * For example:
+ * ``` typescript
+ * import { defineConfig } from 'vite'
+ * import envDts from '@yanandfish/vite-plugin-env-dts'
+ *
+ * export default defineConfig({
+ *   plugins: [
+ *     envDts()
+ *   ]
+ * })
+ * ```
+ *
+ * @param options plugin options
+ * @returns
+ */
 export default function envDts(options: EnvDtsOptions = {}): Plugin {
   let root: string
   let envDir: string | undefined
@@ -23,23 +41,28 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
   return {
     name: PLUGIN_NAME,
     async buildStart() {
+      // plugin only support in typescript project
       if (!isTypeScriptProject()) {
         this.warn(
           'Can not found tsconfig.json or tsconfig.jsonc file,are you sure you are using typescript?'
         )
+        return
       }
-      const envCode = readFileSync(resolve(root, envDir || '.', '.env'), 'utf8')
+
+      // finds all env files
+      const matchPaths = await scanEnv(
+        resolve(root, envDir || '.', '.env*'),
+        options.encoding
+      )
     },
     configResolved(config) {
       root = config.root
       envDir = config.envDir
       envPrefix = config.envPrefix
 
-      // 启用格式转换
       if (options.convertValue) {
         convertValue(config.env)
       }
-      console.log('configResolved', config.env)
     },
   }
 }
