@@ -1,13 +1,13 @@
 import { resolve } from 'path'
 import type { Plugin } from 'vite'
-import parse from './env-parser'
+import { generateDeclareFile } from './dts-generator'
 import { convertValue, isTypeScriptProject, scanEnv } from './util'
 
 /** plugin options */
 export interface EnvDtsOptions {
   include?: (RegExp | string)[]
   exclude?: (RegExp | string)[]
-  declareFilePath?: string
+  declareFile?: string
   convertValue?: boolean
   encoding?: BufferEncoding
 }
@@ -50,15 +50,25 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
       }
 
       // finds all env files
-      const matchPaths = await scanEnv(
+      const envParsed = await scanEnv(
         resolve(root, envDir || '.', '.env*'),
         options.encoding
+      )
+
+      // check and parse declareFile
+      generateDeclareFile(
+        resolve(root, options.declareFile || './src/env.d.ts'),
+        envParsed,
+        options.convertValue || false,
+        envPrefix || 'VITE_'
       )
     },
     configResolved(config) {
       root = config.root
       envDir = config.envDir
       envPrefix = config.envPrefix
+
+      console.log(config.env)
 
       if (options.convertValue) {
         convertValue(config.env)
