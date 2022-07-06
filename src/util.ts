@@ -7,7 +7,7 @@ import parse, { type EnvAcornMap } from './env-parser'
 
 export interface EnvInfo {
   mode: string
-  modifications: string[]
+  isLocal: boolean
 }
 
 export interface EnvParsed {
@@ -31,6 +31,18 @@ export function isNumbery(value?: string): boolean {
 
 export function isBooleany(value?: string): boolean {
   return value === 'true' || value === 'false'
+}
+
+export function getLikelyType(value: string): 'string' | 'boolean' | 'number' {
+  if (isNumbery(value)) {
+    return 'number'
+  }
+
+  if (isBooleany(value)) {
+    return 'boolean'
+  }
+
+  return 'string'
 }
 
 export function convertValue(value: Record<string, any>): void {
@@ -76,7 +88,7 @@ function parseEnvInfo(envPath: string): EnvInfo {
 
   return {
     mode: fileName?.[1] || 'default',
-    modifications: fileName?.slice(2, fileName.length) || [],
+    isLocal: fileName?.[2] === 'local',
   }
 }
 
@@ -143,4 +155,75 @@ export function checkPrefix(
     }
   }
   return false
+}
+
+/**
+ * check env mode is equal
+ * @param a mode a
+ * @param b mode b
+ */
+export function equalsMode(a: string, b: string): boolean {
+  const _target = a.toLowerCase().trim()
+  const _source = b.toLowerCase().trim()
+
+  if (_source === 'dev' || _source === 'development') {
+    return _target === 'dev' || _target === 'development'
+  } else if (_source === 'prod' || _source === 'production') {
+    return _target === 'prod' || _target === 'production'
+  } else {
+    return _target === _source
+  }
+}
+
+/**
+ * assign env map
+ * @param target target env map
+ * @param source source env map
+ * @returns
+ */
+export function assignEnv(
+  target: EnvAcornMap,
+  source: EnvAcornMap
+): EnvAcornMap {
+  const targetKey = Object.keys(target)
+  for (const key in source) {
+    if (targetKey.includes(key)) {
+      target[key] = source[key]
+    }
+  }
+  return target
+}
+
+export function arrayRemove<T>(
+  target: T[],
+  predicate: (item: T, index: number, array: T[]) => boolean
+): T[] {
+  const index = target.findIndex(predicate)
+  if (index >= 0) {
+    target.splice(index, 1)
+  }
+  return target
+}
+
+export function assignLocalEnv(envParsed: EnvParsed[]): EnvParsed[] {
+  envParsed
+    .filter((e) => e.meta.isLocal)
+    .forEach((e) => {
+      // try assign to normal
+      const normal = envParsed.find(
+        (env) => env.meta.mode === e.meta.mode && !env.meta.isLocal
+      )
+      const local = envParsed.find(
+        (env) => env.meta.mode === e.meta.mode && env.meta.isLocal
+      )
+      if (normal && local) {
+        normal.parsed = assignEnv(normal.parsed, local.parsed)
+        arrayRemove(
+          envParsed,
+          (env) => env.meta.mode === e.meta.mode && env.meta.isLocal
+        )
+      }
+    })
+
+  return envParsed
 }

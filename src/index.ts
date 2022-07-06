@@ -1,13 +1,17 @@
 import { resolve } from 'path'
 import type { Plugin } from 'vite'
 import { generateDeclareFile } from './dts-generator'
-import { convertValue, isTypeScriptProject, scanEnv } from './util'
+import {
+  assignLocalEnv,
+  convertValue,
+  isTypeScriptProject,
+  scanEnv,
+} from './util'
 
 /** plugin options */
 export interface EnvDtsOptions {
   include?: (RegExp | string)[]
   exclude?: (RegExp | string)[]
-  declareFile?: string
   convertValue?: boolean
   encoding?: BufferEncoding
 }
@@ -37,9 +41,11 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
   let root: string
   let envDir: string | undefined
   let envPrefix: string | string[] | undefined
+  let mode: string | undefined
 
   return {
     name: PLUGIN_NAME,
+    enforce: 'pre',
     async buildStart() {
       // plugin only support in typescript project
       if (!isTypeScriptProject()) {
@@ -57,9 +63,10 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
 
       // check and parse declareFile
       generateDeclareFile(
-        resolve(root, options.declareFile || './src/env.d.ts'),
-        envParsed,
+        resolve(process.cwd(), 'node_modules/@types/env-dts'),
+        assignLocalEnv(envParsed),
         options.convertValue || false,
+        mode || 'default',
         envPrefix || 'VITE_'
       )
     },
@@ -67,8 +74,7 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
       root = config.root
       envDir = config.envDir
       envPrefix = config.envPrefix
-
-      console.log(config.env)
+      mode = config.env.MODE
 
       if (options.convertValue) {
         convertValue(config.env)
