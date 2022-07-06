@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-env-dts",
+  "name": "@yafh/vite-plugin-env-dts",
   "version": "0.0.0",
   "description": "Auto generate env file declare for typescript of Vite plugins",
   "main": "dist/index.js",
@@ -31,6 +31,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "fast-glob": "^3.2.11"
   }
