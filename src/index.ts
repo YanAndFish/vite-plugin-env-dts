@@ -10,9 +10,13 @@ import {
 
 /** plugin options */
 export interface EnvDtsOptions {
-  include?: (RegExp | string)[]
-  exclude?: (RegExp | string)[]
+  /**
+   * set if convert value to number or boolean
+   */
   convertValue?: boolean
+  /**
+   * env file encoding
+   */
   encoding?: BufferEncoding
 }
 
@@ -76,6 +80,7 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
       envPrefix = config.envPrefix
       mode = config.env.MODE
 
+      // TODO: unsafe method
       if (options.convertValue) {
         convertValue(config.env)
       }
