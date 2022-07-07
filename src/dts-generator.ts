@@ -67,12 +67,12 @@ interface ImportMetaEnv {
 
 function renderAnnotation(data: DeclareLine): string {
   return `/**
-   * ${data.annotation?.replace('\n', '\n   * ') || ''}
+   * ${data.annotation?.replace(/\n/g, '\n   * \n   * ') || ''}
   ${Object.entries(data.values)
     .map(([mode, value]) => ` * - \`${mode}\` ${value}`)
     .join('\n  ')}
    */
-`
+`.replace(/\#/g, '\\#')
 }
 
 /**

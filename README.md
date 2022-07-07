@@ -101,7 +101,16 @@ Try convert env value to boolean or number.
 
 env file :
 ```env
+# .env
+
 VITE_FOO=bar
+VITE_BOOLEAN=true
+VITE_NUMBER=10
+```
+```env
+# .env.dev
+
+VITE_FOO=2022
 VITE_BOOLEAN=true
 VITE_NUMBER=10
 ```
@@ -110,7 +119,7 @@ env object:
 ```typescript
 // import.meta.env
 {
-  VITE_FOO: 'bar',
+  VITE_FOO: 'bar', // or 2022
   VITE_BOOLEAN: true,
   VITE_NUMBER: 10,
 }
@@ -121,7 +130,7 @@ declare file:
 // @types/env-dts/index.d.ts
 
 interface ImportMetaEnv {
-  VITE_FOO: string;
+  VITE_FOO: string | number;
   VITE_BOOLEAN: boolean;
   VITE_NUMBER: number;
 }
