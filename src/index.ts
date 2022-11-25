@@ -67,7 +67,7 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
 
       // check and parse declareFile
       generateDeclareFile(
-        resolve(process.cwd(), 'node_modules/@types/env-dts'),
+        resolve(process.cwd(), 'node_modules/@types/yafh_generate.envdts'),
         assignLocalEnv(envParsed),
         options.convertValue || false,
         mode || 'default',
