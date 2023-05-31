@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [
     envdts({
       convertValue: true,
+      dts: './houa/env.d.ts'
     }),
   ],
   resolve: {

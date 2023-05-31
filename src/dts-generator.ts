@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
-import { resolve } from 'path'
+import { dirname } from 'path'
 import {
   checkPrefix,
   equalsMode,
@@ -40,12 +40,12 @@ export function generateDeclareFile(
     prefix
   )
 
-  if (!existsSync(filePath)) {
-    mkdirSync(filePath, { recursive: true })
+  if (!existsSync(dirname(filePath))) {
+    mkdirSync(dirname(filePath), { recursive: true })
   }
 
   writeFileSync(
-    resolve(filePath, 'index.d.ts'),
+    filePath,
     renderInterface(Object.values(declareLines))
   )
 }

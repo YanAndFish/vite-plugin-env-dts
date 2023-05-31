@@ -173,3 +173,9 @@ interface ImportMetaEnv {
 - default : 'utf8'
 
 env file encoding
+
+## dts (0.2.2+)
+
+- type : string
+
+generate declare file in custom path. (eg: `typing/env.d.ts`)

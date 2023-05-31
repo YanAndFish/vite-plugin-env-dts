@@ -18,6 +18,10 @@ export interface EnvDtsOptions {
    * env file encoding
    */
   encoding?: BufferEncoding
+  /**
+   * declare file path
+   */
+  dts?: string
 }
 
 /** plugin name */
@@ -67,7 +71,7 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
 
       // check and parse declareFile
       generateDeclareFile(
-        resolve(process.cwd(), 'node_modules/@types/yafh_generate.envdts'),
+        resolve(process.cwd(), options.dts || 'node_modules/@types/yafh_generate.envdts/index.d.ts'),
         assignLocalEnv(envParsed),
         options.convertValue || false,
         mode || 'default',
