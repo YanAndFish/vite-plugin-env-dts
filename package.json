@@ -1,6 +1,6 @@
 {
   "name": "@yafh/vite-plugin-env-dts",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Auto generate env file declare for typescript of Vite plugins",
   "type": "module",
   "scripts": {
