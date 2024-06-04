@@ -13,7 +13,7 @@ import {
  */
 interface DeclareLine {
   name: string
-  annotation?: string
+  annotation?: string[]
   type: ('string' | 'boolean' | 'number')[]
   required: boolean
   values: Record<string, string>
@@ -31,13 +31,15 @@ export function generateDeclareFile(
   envParsed: EnvParsed[],
   isConvertValue: boolean,
   currentMode: string,
-  prefix?: string | string[]
+  prefix?: string | string[],
+  skipMaybeNull = false
 ): void {
   const declareLines: Record<string, DeclareLine> = createDecalreInfo(
     envParsed,
     isConvertValue,
     currentMode,
-    prefix
+    prefix,
+    skipMaybeNull
   )
 
   if (!existsSync(dirname(filePath))) {
@@ -51,7 +53,7 @@ export function generateDeclareFile(
 }
 
 function renderDeclareLine(data: DeclareLine): string {
-  return `${renderAnnotation(data)}  readonly ${data.name}${
+  return `${renderAnnotation(data)}\n  readonly ${data.name}${
     data.required ? ':' : '?:'
   } ${data.type.join(' | ')}`
 }
@@ -68,13 +70,21 @@ interface ImportMetaEnv {
 }
 
 function renderAnnotation(data: DeclareLine): string {
-  return `/**
-   * ${data.annotation?.replace(/\n/g, '\n   * \n   * ') || ''}
-  ${Object.entries(data.values)
-    .map(([mode, value]) => ` * - \`${mode}\` ${value}`)
-    .join('\n  ')}
-   */
-`.replace(/\#/g, '\\#')
+
+  const comments = data.annotation?.length ? [
+    '```text',
+    ...data.annotation,
+    '```',
+  ] : []
+
+  const valueHints = Object.entries(data.values).map(([mode,value]) => `- \`${mode}\` ${value}`)
+
+  const annotationBody = [
+    ...comments,
+    ...valueHints
+  ].map((e) => `   * ${e}`).join('\n')
+
+  return `/**\n${annotationBody}\n   */`
 }
 
 /**
@@ -88,7 +98,8 @@ function createDecalreInfo(
   envParsed: EnvParsed[],
   isConvertValue: boolean,
   currentMode: string,
-  prefix?: string | string[]
+  prefix?: string | string[],
+  skipMaybeNull = false
 ): Record<string, DeclareLine> {
   const declareLines: Record<string, DeclareLine> = {}
 
@@ -131,7 +142,7 @@ function createDecalreInfo(
 
   // update required field
   Object.values(declareLines).forEach((e) => {
-    e.required = Object.keys(e.values).length === Object.keys(envParsed).length
+    e.required = skipMaybeNull ? true : Object.keys(e.values).length === Object.keys(envParsed).length
   })
 
   return declareLines

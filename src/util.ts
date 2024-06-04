@@ -1,9 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import fastGlob from 'fast-glob'
-import parse, { type EnvAcornMap } from './env-parser'
-
-
+import { parse, type EnvAcornMap } from './env-parser'
 
 export interface EnvInfo {
   mode: string
@@ -19,10 +17,7 @@ export interface EnvParsed {
  * check if the project use Typescript
  */
 export function isTypeScriptProject(): boolean {
-  return !!(
-    existsSync(join(process.cwd(), 'tsconfig.json')) ||
-    existsSync(join(process.cwd(), 'tsconfig.jsonc'))
-  )
+  return !!(existsSync(join(process.cwd(), 'tsconfig.json')) || existsSync(join(process.cwd(), 'tsconfig.jsonc')))
 }
 
 export function isNumbery(value?: string): boolean {
@@ -62,10 +57,7 @@ export function convertValue(value: Record<string, any>): void {
  * @param glob glob pattern
  * @param encoding file encoding
  */
-export async function scanEnv(
-  glob: string,
-  encoding: BufferEncoding = 'utf-8'
-): Promise<EnvParsed[]> {
+export async function scanEnv(glob: string, encoding: BufferEncoding = 'utf-8'): Promise<EnvParsed[]> {
   const matchPaths = await fastGlob(glob, {
     onlyFiles: true,
     dot: true,
@@ -84,11 +76,15 @@ export async function scanEnv(
 }
 
 function parseEnvInfo(envPath: string): EnvInfo {
-  const fileName = envPath.replace(/^.*\.env/, '')?.split('.')
+  const fileName =
+    envPath
+      .match(/\.env\.?([^\/]*)/)?.[1]
+      ?.split('.')
+      ?.filter(Boolean) || []
 
   return {
-    mode: fileName?.[1] || 'default',
-    isLocal: fileName?.[2] === 'local',
+    mode: fileName[0] || 'default',
+    isLocal: fileName.includes('local'),
   }
 }
 
@@ -142,10 +138,7 @@ export class MagicString {
  * @param prefix prefix
  * @returns
  */
-export function checkPrefix(
-  target: string,
-  prefix: string | string[]
-): boolean {
+export function checkPrefix(target: string, prefix: string | string[]): boolean {
   if (typeof prefix === 'string') {
     return target.startsWith(prefix)
   }
@@ -181,10 +174,7 @@ export function equalsMode(a: string, b: string): boolean {
  * @param source source env map
  * @returns
  */
-export function assignEnv(
-  target: EnvAcornMap,
-  source: EnvAcornMap
-): EnvAcornMap {
+export function assignEnv(target: EnvAcornMap, source: EnvAcornMap): EnvAcornMap {
   const targetKey = Object.keys(target)
   for (const key in source) {
     if (targetKey.includes(key)) {
@@ -194,10 +184,7 @@ export function assignEnv(
   return target
 }
 
-export function arrayRemove<T>(
-  target: T[],
-  predicate: (item: T, index: number, array: T[]) => boolean
-): T[] {
+export function arrayRemove<T>(target: T[], predicate: (item: T, index: number, array: T[]) => boolean): T[] {
   const index = target.findIndex(predicate)
   if (index >= 0) {
     target.splice(index, 1)
@@ -210,18 +197,11 @@ export function assignLocalEnv(envParsed: EnvParsed[]): EnvParsed[] {
     .filter((e) => e.meta.isLocal)
     .forEach((e) => {
       // try assign to normal
-      const normal = envParsed.find(
-        (env) => env.meta.mode === e.meta.mode && !env.meta.isLocal
-      )
-      const local = envParsed.find(
-        (env) => env.meta.mode === e.meta.mode && env.meta.isLocal
-      )
+      const normal = envParsed.find((env) => env.meta.mode === e.meta.mode && !env.meta.isLocal)
+      const local = envParsed.find((env) => env.meta.mode === e.meta.mode && env.meta.isLocal)
       if (normal && local) {
         normal.parsed = assignEnv(normal.parsed, local.parsed)
-        arrayRemove(
-          envParsed,
-          (env) => env.meta.mode === e.meta.mode && env.meta.isLocal
-        )
+        arrayRemove(envParsed, (env) => env.meta.mode === e.meta.mode && env.meta.isLocal)
       }
     })
 

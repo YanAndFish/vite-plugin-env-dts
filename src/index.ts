@@ -11,6 +11,7 @@ import {
 /** plugin options */
 export interface EnvDtsOptions {
   /**
+   * @deprecated
    * set if convert value to number or boolean
    */
   convertValue?: boolean
@@ -22,6 +23,10 @@ export interface EnvDtsOptions {
    * declare file path
    */
   dts?: string
+  /**
+   * Ignore null checking of a value under different environment variables, generating type declarations that are always not null
+   */
+  skipMaybeNull?: boolean
 }
 
 /** plugin name */
@@ -75,7 +80,8 @@ export default function envDts(options: EnvDtsOptions = {}): Plugin {
         assignLocalEnv(envParsed),
         options.convertValue || false,
         mode || 'default',
-        envPrefix || 'VITE_'
+        envPrefix || 'VITE_',
+        options.skipMaybeNull
       )
     },
     configResolved(config) {

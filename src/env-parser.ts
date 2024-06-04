@@ -1,14 +1,21 @@
 import { getLikelyType } from './util'
 
 const LINE =
-  /(?:^|^)\s*((?:\s*#.+\n)*)?(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?[^#\r\n]*(#.*)?(?:$|$)/gm
+  /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(#.*)?(?:$|$)/
 
 export type EnvAcornMap = {
   [name: string]: {
-    annotation?: string
+    annotation?: string[]
     value: string
     likelyType: 'string' | 'boolean' | 'number'
   }
+}
+
+function normalizeCommnet(str: string): string {
+  return str
+    .replace(/^\s*#\s*(.*)/, '$1')
+    .replace('*/', '*\u200b/')
+    .trim()
 }
 
 /**
@@ -16,45 +23,33 @@ export type EnvAcornMap = {
  * @param src
  * @returns
  */
-export default function parse(src: string): EnvAcornMap {
-  const obj: EnvAcornMap = {}
+export function parse(src: string): EnvAcornMap {
+  const envEntries: EnvAcornMap = {}
 
-  // Convert line breaks to same format
-  const lines = src.replace(/\r\n?/gm, '\n')
+  const lines = src.split(/\r?\n/)
+  let currentCommentLines: string[] = []
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    if (trimmedLine.startsWith('#')) {
+      // If the line is a comment, add it to the current comment lines
+      currentCommentLines.push(normalizeCommnet(trimmedLine))
+    } else if (LINE.test(trimmedLine)) {
+      const [, key, value, comment] = LINE.exec(line) || []
 
-  let match: RegExpExecArray | null
-  while ((match = LINE.exec(lines)) != null) {
-    const annotation = match[1] || match[4]
+      // check if quotes
+      const stringAssert = /^(['"`])([\s\S]*)\1$/gm.test(value)
+      envEntries[key] = {
+        value: value?.replace(/^(['"`])([\s\S]*)\1$/gm, '$2') || '',
+        likelyType: stringAssert ? 'string' : getLikelyType(value),
+        annotation: [...currentCommentLines, comment && normalizeCommnet(comment)].filter(Boolean)
+      }
 
-    const key = match[2]
-
-    // Default undefined or null to empty string
-    let value = match[3] || ''
-
-    // Remove whitespace
-    value = value.trim()
-
-    // Check if double quoted
-    const maybeQuote = value[0]
-
-    // check if quotes
-    const stringAssert = /^(['"`])([\s\S]*)\1$/gm.test(value)
-
-    // Remove surrounding quotes
-    value = value.replace(/^(['"`])([\s\S]*)\1$/gm, '$2')
-
-    // Expand newlines if double quoted
-    if (maybeQuote === '"') {
-      value = value.replace(/\\n/g, '\n')
-      value = value.replace(/\\r/g, '\r')
-    }
-
-    // Add to object
-    obj[key] = {
-      value,
-      annotation,
-      likelyType: stringAssert ? 'string' : getLikelyType(value),
+      currentCommentLines = []
+    } else if (trimmedLine === '') {
+      // If the line is empty, reset the current comment lines
+      currentCommentLines = []
     }
   }
-  return obj
+
+  return envEntries
 }
